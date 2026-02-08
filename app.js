@@ -8,53 +8,38 @@ const CONFIG = {
     }
 };
 
-// Resource type icons
-const RESOURCE_ICONS = {
-    'ppt': '📊',
-    'website': '🌐',
-    'confluence': '📝',
-    'video': '🎥',
-    'pdf': '📄',
-    'notion': '📓'
-};
-
-// 배송지 아이콘 풀 (다양한 건축물들)
-const DELIVERY_ICONS = ['🏢', '🏬', '🏪', '🏫', '🏛️', '🏗️', '🏤', '🏥', '🏦', '🏨', '🏩', '🏰', '⛪', '🕌'];
-
-// 각 배송지에 고정된 아이콘 저장
-const deliveryIconMap = {};
-
 // Global state
 let presentations = [];
 let comments = [];
-let visitedHouses = new Set(); // 방문한 배송지 추적
+let currentFilter = 'all';
+let searchTerm = '';
 
-// Initialize app
+// Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
     setupEventListeners();
-    loadVisitedHouses();
 });
 
 // Setup event listeners
 function setupEventListeners() {
-    const addButton = document.getElementById('add-delivery-btn');
-    if (addButton) {
-        addButton.addEventListener('click', openAddDeliveryModal);
-    }
-}
+    // 검색
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value.toLowerCase();
+        filterAndRenderCases();
+    });
 
-// Load visited houses from localStorage
-function loadVisitedHouses() {
-    const saved = localStorage.getItem('visitedHouses');
-    if (saved) {
-        visitedHouses = new Set(JSON.parse(saved));
-    }
-}
+    // 새 사례 등록 버튼
+    document.getElementById('add-case-btn').addEventListener('click', openAddModal);
 
-// Save visited houses to localStorage
-function saveVisitedHouses() {
-    localStorage.setItem('visitedHouses', JSON.stringify([...visitedHouses]));
+    // 모달 외부 클릭 시 닫기
+    document.getElementById('detail-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'detail-modal') closeDetailModal();
+    });
+
+    document.getElementById('add-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'add-modal') closeAddModal();
+    });
 }
 
 // Load data from Google Sheets
@@ -74,10 +59,11 @@ async function loadData() {
         presentations = parseGoogleSheetsResponse(presText);
         comments = parseGoogleSheetsResponse(commText);
         
-        renderDeliveryMap();
+        buildFilters();
+        renderCases();
         
         document.getElementById('loading').classList.add('hidden');
-        document.getElementById('delivery-map').classList.remove('hidden');
+        document.getElementById('cases-grid').classList.remove('hidden');
     } catch (error) {
         console.error('Error loading data:', error);
         document.getElementById('loading').classList.add('hidden');
@@ -85,7 +71,7 @@ async function loadData() {
     }
 }
 
-// Parse Google Sheets JSON response
+// Parse Google Sheets response
 function parseGoogleSheetsResponse(text) {
     const jsonString = text.substring(47).slice(0, -2);
     const data = JSON.parse(jsonString);
@@ -104,228 +90,267 @@ function parseGoogleSheetsResponse(text) {
     });
 }
 
-// Render delivery map
-function renderDeliveryMap() {
-    const container = document.getElementById('houses-container');
-    container.innerHTML = '';
-    container.style.position = 'relative';
-    container.style.width = '100%';
-    container.style.minHeight = '600px';
+// Build AI tool filters
+function buildFilters() {
+    const aiTools = [...new Set(presentations.map(p => p.aiTool))].filter(Boolean);
+    const container = document.getElementById('ai-filter-container');
     
-    presentations.forEach((pres, index) => {
-        const spot = createDeliverySpot(pres, index);
-        container.appendChild(spot);
+    aiTools.forEach(tool => {
+        const button = document.createElement('button');
+        button.className = 'filter-btn px-6 py-3 rounded-full bg-white font-semibold text-slate-700 shadow-md hover:shadow-lg transition-all';
+        button.textContent = tool;
+        button.dataset.filter = tool;
+        button.addEventListener('click', () => setFilter(tool, button));
+        container.appendChild(button);
     });
 }
 
-// Create delivery spot (배송지) - 무작위 배치
-function createDeliverySpot(pres, index) {
-    const spot = document.createElement('div');
-    const isVisited = visitedHouses.has(pres.id.toString());
-    const spotComments = comments.filter(c => c.presentationId == pres.id);
+// Set filter
+function setFilter(filter, button) {
+    currentFilter = filter;
     
-    // 고정된 아이콘 할당 (없으면 새로 생성)
-    if (!deliveryIconMap[pres.id]) {
-        deliveryIconMap[pres.id] = DELIVERY_ICONS[Math.floor(Math.random() * DELIVERY_ICONS.length)];
-    }
-    const icon = deliveryIconMap[pres.id];
+    // Update button states
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    button.classList.add('active');
     
-    // 무작위 위치 계산 (겹치지 않도록)
-    const positions = [
-        { top: '10%', left: '15%' },
-        { top: '25%', left: '70%' },
-        { top: '15%', left: '45%' },
-        { top: '40%', left: '25%' },
-        { top: '35%', left: '80%' },
-        { top: '55%', left: '15%' },
-        { top: '50%', left: '55%' },
-        { top: '65%', left: '35%' },
-        { top: '70%', left: '75%' },
-        { top: '20%', left: '85%' },
-        { top: '45%', left: '5%' },
-        { top: '75%', left: '10%' },
-    ];
-    
-    const position = positions[index % positions.length];
-    
-    spot.className = `delivery-spot absolute ${isVisited ? 'delivery-visited' : 'delivery-unvisited'}`;
-    spot.style.top = position.top;
-    spot.style.left = position.left;
-    spot.style.zIndex = '5';
-    
-    spot.innerHTML = `
-        <div class="delivery-icon">${icon}</div>
-        
-        <!-- 툴팁 -->
-        <div class="delivery-tooltip">
-            <div class="font-bold text-gray-800">${pres.title}</div>
-            <div class="text-gray-600 text-xs">${pres.presenter} · ${pres.team}</div>
-        </div>
-        
-        <!-- 택배상자 쌓임 -->
-        ${spotComments.length > 0 ? `
-            <div class="boxes-stack">
-                ${spotComments.map((_, i) => {
-                    const rotation = (Math.random() - 0.5) * 30;
-                    const offsetX = (Math.random() - 0.5) * 15;
-                    const offsetY = Math.random() * 8;
-                    return `<span class="box" style="--rotate: ${rotation}deg; --offset-x: ${offsetX}px; --offset-y: ${offsetY}px;">📦</span>`;
-                }).join('')}
-            </div>
-        ` : ''}
-    `;
-    
-    spot.addEventListener('click', () => openDeliveryModal(pres));
-    
-    return spot;
+    filterAndRenderCases();
 }
 
-// Open delivery modal
-function openDeliveryModal(pres) {
-    // 방문 처리
-    visitedHouses.add(pres.id.toString());
-    saveVisitedHouses();
+// Filter and render cases
+function filterAndRenderCases() {
+    let filtered = presentations;
     
-    const modal = document.getElementById('delivery-modal');
-    const modalContent = document.getElementById('modal-content');
+    // Apply AI tool filter
+    if (currentFilter !== 'all') {
+        filtered = filtered.filter(p => p.aiTool === currentFilter);
+    }
     
-    const presComments = comments.filter(c => c.presentationId == pres.id);
+    // Apply search
+    if (searchTerm) {
+        filtered = filtered.filter(p => 
+            p.title?.toLowerCase().includes(searchTerm) ||
+            p.presenter?.toLowerCase().includes(searchTerm) ||
+            p.aiTool?.toLowerCase().includes(searchTerm) ||
+            p.description?.toLowerCase().includes(searchTerm)
+        );
+    }
     
-    modalContent.innerHTML = `
-        <div class="sticky top-0 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-4 flex justify-between items-center rounded-t-2xl z-10">
-            <h2 class="text-2xl font-bold flex items-center gap-2">
-                <span class="text-3xl">🏡</span>
-                배송 완료!
-            </h2>
-            <button onclick="closeDeliveryModal()" class="text-white hover:text-yellow-200 text-3xl">&times;</button>
+    renderCases(filtered);
+}
+
+// Render cases
+function renderCases(casesToRender = presentations) {
+    const grid = document.getElementById('cases-grid');
+    const noResults = document.getElementById('no-results');
+    
+    if (casesToRender.length === 0) {
+        grid.classList.add('hidden');
+        noResults.classList.remove('hidden');
+        return;
+    }
+    
+    grid.classList.remove('hidden');
+    noResults.classList.add('hidden');
+    grid.innerHTML = '';
+    
+    casesToRender.forEach((pres, index) => {
+        const card = createCaseCard(pres, index);
+        grid.appendChild(card);
+    });
+}
+
+// Create case card
+function createCaseCard(pres, index) {
+    const card = document.createElement('div');
+    card.className = 'card-interactive bg-white rounded-2xl p-6 shadow-lg fade-in-up';
+    card.style.animationDelay = `${index * 0.1}s`;
+    
+    const caseComments = comments.filter(c => c.presentationId == pres.id);
+    
+    card.innerHTML = `
+        <div class="flex items-start justify-between mb-4">
+            <div class="ai-badge text-white text-xs font-bold px-3 py-1 rounded-full">
+                ${pres.aiTool || 'AI 도구'}
+            </div>
+            <div class="text-slate-400 text-sm">
+                ${caseComments.length} 💬
+            </div>
         </div>
         
-        <div class="p-6">
-            <!-- 배송물 정보 -->
-            <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-5 mb-6 border-2 border-yellow-200">
-                <h3 class="text-2xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    📦 ${pres.title}
-                </h3>
-                
-                <!-- 사용 AI 도구 (위로 이동) -->
-                <div class="mb-4 bg-white rounded-lg p-3 border border-purple-200">
-                    <p class="text-sm text-gray-600 mb-1">🤖 사용 AI 도구</p>
-                    <p class="text-gray-800 font-bold text-lg">${pres.aiTool}</p>
+        <h3 class="text-xl font-bold text-slate-900 mb-3 line-clamp-2">
+            ${pres.title}
+        </h3>
+        
+        <p class="text-slate-600 text-sm mb-4 line-clamp-3">
+            ${pres.description ? pres.description.split('\n\n')[0] : ''}
+        </p>
+        
+        <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                    ${pres.presenter ? pres.presenter.charAt(0) : '?'}
                 </div>
-                
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <p class="text-sm text-gray-600">발송인</p>
-                        <p class="font-bold text-gray-800">${pres.presenter}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">소속</p>
-                        <p class="font-bold text-gray-800">${pres.team}</p>
-                    </div>
-                </div>
-                
-                <!-- 내용물 설명 (3단계) -->
-                <div class="space-y-3">
-                    <div class="bg-white rounded-lg p-3 border border-blue-200">
-                        <p class="text-sm font-bold text-blue-600 mb-2">💡 왜 했는지?</p>
-                        <p class="text-gray-700 whitespace-pre-line">${pres.description ? pres.description.split('\n\n')[0] || pres.description : ''}</p>
-                    </div>
-                    
-                    ${pres.description && pres.description.includes('\n\n') ? `
-                    <div class="bg-white rounded-lg p-3 border border-purple-200">
-                        <p class="text-sm font-bold text-purple-600 mb-2">🛠️ 무엇이 좋아졌는지?</p>
-                        <p class="text-gray-700 whitespace-pre-line">${pres.description.split('\n\n')[1] || ''}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${pres.description && pres.description.split('\n\n').length > 2 ? `
-                    <div class="bg-white rounded-lg p-3 border border-green-200">
-                        <p class="text-sm font-bold text-green-600 mb-2">✨ 어떤 결과로 이어졌는지?</p>
-                        <p class="text-gray-700 whitespace-pre-line">${pres.description.split('\n\n')[2] || ''}</p>
-                    </div>
-                    ` : ''}
+                <div>
+                    <p class="text-sm font-bold text-slate-900">${pres.presenter}</p>
+                    <p class="text-xs text-slate-500">${pres.team}</p>
                 </div>
             </div>
             
-            <!-- 배송 명세서 -->
-            <div class="mb-6">
+            <button class="text-amber-500 hover:text-amber-600 transition-colors font-semibold text-sm">
+                자세히 →
+            </button>
+        </div>
+    `;
+    
+    card.addEventListener('click', () => openDetailModal(pres));
+    
+    return card;
+}
+
+// Open detail modal
+function openDetailModal(pres) {
+    const modal = document.getElementById('detail-modal');
+    const modalContent = document.getElementById('modal-content');
+    
+    const caseComments = comments.filter(c => c.presentationId == pres.id);
+    const descParts = pres.description ? pres.description.split('\n\n') : [];
+    
+    modalContent.innerHTML = `
+        <div class="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-900 px-8 py-6 flex justify-between items-center rounded-t-2xl z-10">
+            <h2 class="text-2xl font-display text-white">${pres.title}</h2>
+            <button onclick="closeDetailModal()" class="text-white hover:text-amber-400 text-3xl leading-none transition-colors">&times;</button>
+        </div>
+        
+        <div class="p-8">
+            <!-- 발표자 정보 -->
+            <div class="flex items-center gap-4 mb-8 pb-6 border-b border-slate-200">
+                <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                    ${pres.presenter ? pres.presenter.charAt(0) : '?'}
+                </div>
+                <div class="flex-1">
+                    <p class="text-lg font-bold text-slate-900">${pres.presenter}</p>
+                    <p class="text-slate-600">${pres.team}</p>
+                </div>
+                <div class="ai-badge text-white font-bold px-4 py-2 rounded-full">
+                    🤖 ${pres.aiTool}
+                </div>
+            </div>
+            
+            <!-- 내용 (3단계) -->
+            <div class="space-y-6 mb-8">
+                ${descParts[0] ? `
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg">
+                    <h3 class="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        <span class="text-2xl">💡</span>
+                        왜 했는지?
+                    </h3>
+                    <p class="text-slate-700 leading-relaxed">${descParts[0]}</p>
+                </div>
+                ` : ''}
+                
+                ${descParts[1] ? `
+                <div class="bg-purple-50 border-l-4 border-purple-500 p-6 rounded-lg">
+                    <h3 class="text-lg font-bold text-purple-900 mb-3 flex items-center gap-2">
+                        <span class="text-2xl">🛠️</span>
+                        무엇이 좋아졌는지?
+                    </h3>
+                    <p class="text-slate-700 leading-relaxed">${descParts[1]}</p>
+                </div>
+                ` : ''}
+                
+                ${descParts[2] ? `
+                <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
+                    <h3 class="text-lg font-bold text-green-900 mb-3 flex items-center gap-2">
+                        <span class="text-2xl">✨</span>
+                        어떤 결과로 이어졌는지?
+                    </h3>
+                    <p class="text-slate-700 leading-relaxed">${descParts[2]}</p>
+                </div>
+                ` : ''}
+            </div>
+            
+            <!-- 자료 링크 -->
+            <div class="mb-8">
                 <a href="${pres.resourceUrl}" target="_blank" 
-                   class="block bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl text-center transition shadow-lg">
-                    ${RESOURCE_ICONS[pres.resourceType]} 배송 명세서 보기
+                   class="block bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold py-4 px-6 rounded-xl text-center transition-all shadow-lg hover:shadow-xl hover:scale-105">
+                    📄 발표 자료 보기
                 </a>
-                <p class="text-center text-xs text-gray-500 mt-2">문 앞에 안전하게 놓아두었습니다 😊</p>
             </div>
             
-            <!-- 배송 후기 (댓글) -->
-            <div class="border-t-2 border-purple-200 pt-6">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <!-- 댓글 섹션 -->
+            <div class="border-t-2 border-slate-200 pt-8">
+                <h3 class="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                     💬 댓글
-                    <span class="text-sm text-gray-600">(${presComments.length})</span>
+                    <span class="text-lg text-slate-500">(${caseComments.length})</span>
                 </h3>
                 
-                <!-- 댓글 작성 폼 (유형 선택 제거) -->
-                <div class="bg-purple-50 rounded-xl p-4 mb-6">
+                <!-- 댓글 작성 -->
+                <div class="bg-slate-50 rounded-xl p-6 mb-6">
                     <textarea 
                         id="comment-content"
-                        class="w-full border-2 border-purple-200 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-2"
+                        class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition-colors mb-3"
                         rows="3"
-                        placeholder="댓글을 남겨주세요..."
+                        placeholder="댓글을 입력하세요..."
                     ></textarea>
-                    <div class="flex items-center gap-2">
+                    <div class="flex gap-3">
                         <input 
                             id="comment-author"
                             type="text"
-                            class="flex-1 border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            class="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition-colors"
                             placeholder="이름"
                         />
                         <button 
                             onclick="submitComment(${pres.id})"
-                            class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition whitespace-nowrap shadow-lg"
+                            class="px-8 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl whitespace-nowrap"
                         >
-                            💬 댓글 남기기
+                            💬 댓글 작성
                         </button>
                     </div>
                 </div>
                 
-                <!-- 댓글 목록 (유형 배지 제거) -->
-                <div class="space-y-3">
-                    ${presComments.length > 0 ? presComments.map(comment => `
-                        <div class="bg-white rounded-lg p-4 shadow-md border-2 border-purple-100">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-bold text-gray-800">${comment.author}</span>
-                                <span class="text-sm text-gray-500">${formatDate(comment.timestamp)}</span>
+                <!-- 댓글 목록 -->
+                <div class="space-y-4">
+                    ${caseComments.length > 0 ? caseComments.map(comment => `
+                        <div class="bg-white border-2 border-slate-100 rounded-xl p-5 hover:border-slate-200 transition-colors">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                        ${comment.author ? comment.author.charAt(0) : '?'}
+                                    </div>
+                                    <span class="font-bold text-slate-900">${comment.author}</span>
+                                </div>
+                                <span class="text-sm text-slate-500">${formatDate(comment.timestamp)}</span>
                             </div>
-                            <p class="text-gray-700">${comment.content}</p>
+                            <p class="text-slate-700 leading-relaxed">${comment.content}</p>
                         </div>
-                    `).join('') : '<p class="text-center text-gray-500 py-8 bg-white rounded-lg">아직 댓글이 없습니다. 첫 댓글을 남겨보세요! 💬</p>'}
+                    `).join('') : '<p class="text-center text-slate-500 py-12 bg-slate-50 rounded-xl">아직 댓글이 없습니다. 첫 댓글을 남겨보세요! 💬</p>'}
                 </div>
             </div>
         </div>
     `;
     
     modal.classList.remove('hidden');
-    
-    // 지도 업데이트 (배송 완료 표시)
-    renderDeliveryMap();
 }
 
-// Close delivery modal
-function closeDeliveryModal() {
-    document.getElementById('delivery-modal').classList.add('hidden');
+// Close detail modal
+function closeDetailModal() {
+    document.getElementById('detail-modal').classList.add('hidden');
 }
 
-// Close add delivery modal
-function closeAddDeliveryModal() {
-    document.getElementById('add-delivery-modal').classList.add('hidden');
+// Open add modal
+function openAddModal() {
+    document.getElementById('add-modal').classList.remove('hidden');
 }
 
-// Open add delivery modal
-function openAddDeliveryModal() {
-    document.getElementById('add-delivery-modal').classList.remove('hidden');
+// Close add modal
+function closeAddModal() {
+    document.getElementById('add-modal').classList.add('hidden');
 }
 
-// Submit new delivery
-async function submitDelivery() {
+// Submit new case
+async function submitCase() {
     const title = document.getElementById('new-title').value;
     const presenter = document.getElementById('new-presenter').value;
     const team = document.getElementById('new-team').value;
@@ -340,22 +365,13 @@ async function submitDelivery() {
         return;
     }
     
-    // 설명을 3단계로 합침 (\n\n로 구분)
     const description = `${why}\n\n${what}\n\n${result}`;
-    
-    // resourceType 자동 결정
-    const resourceType = 'website'; // 기본값
+    const resourceType = 'website';
     
     try {
         const params = new URLSearchParams({
             action: 'addPresentation',
-            title: title,
-            presenter: presenter,
-            team: team,
-            description: description,
-            aiTool: aiTool,
-            resourceType: resourceType,
-            resourceUrl: resourceUrl
+            title, presenter, team, description, aiTool, resourceType, resourceUrl
         });
         
         const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params.toString()}`, {
@@ -367,14 +383,14 @@ async function submitDelivery() {
         const result = JSON.parse(text);
         
         if (result.success) {
-            alert('🚚 새 배송지가 등록되었습니다!');
-            closeAddDeliveryModal();
+            alert('✨ 새 사례가 등록되었습니다!');
+            closeAddModal();
             await loadData();
         } else {
             alert('등록 실패: ' + (result.error || '알 수 없는 오류'));
         }
     } catch (error) {
-        console.error('Error submitting delivery:', error);
+        console.error('Error:', error);
         alert('등록 중 오류가 발생했습니다: ' + error.message);
     }
 }
@@ -393,14 +409,9 @@ async function submitComment(presentationId) {
         const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
             method: 'POST',
             redirect: 'follow',
-            headers: {
-                'Content-Type': 'text/plain',
-            },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
-                presentationId: presentationId,
-                author: author,
-                content: content,
-                type: 'comment'
+                presentationId, author, content, type: 'comment'
             })
         });
         
@@ -410,13 +421,13 @@ async function submitComment(presentationId) {
         if (result.success) {
             comments.push(result.comment);
             const pres = presentations.find(p => p.id == presentationId);
-            openDeliveryModal(pres);
+            openDetailModal(pres);
             alert('💬 댓글이 등록되었습니다!');
         } else {
             alert('댓글 등록 실패: ' + (result.error || '알 수 없는 오류'));
         }
     } catch (error) {
-        console.error('Error submitting comment:', error);
+        console.error('Error:', error);
         alert('댓글 등록 중 오류가 발생했습니다: ' + error.message);
     }
 }
@@ -437,16 +448,3 @@ function formatDate(dateString) {
     if (days < 7) return `${days}일 전`;
     return date.toLocaleDateString('ko-KR');
 }
-
-// Close modal when clicking outside
-document.getElementById('delivery-modal').addEventListener('click', (e) => {
-    if (e.target.id === 'delivery-modal') {
-        closeDeliveryModal();
-    }
-});
-
-document.getElementById('add-delivery-modal').addEventListener('click', (e) => {
-    if (e.target.id === 'add-delivery-modal') {
-        closeAddDeliveryModal();
-    }
-});
