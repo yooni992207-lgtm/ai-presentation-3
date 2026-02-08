@@ -8,15 +8,28 @@ const CONFIG = {
     }
 };
 
+// Resource type icons
+const RESOURCE_ICONS = {
+    'ppt': '📊',
+    'website': '🌐',
+    'confluence': '📝',
+    'video': '🎥',
+    'pdf': '📄',
+    'notion': '📓'
+};
+
 // Global state
 let presentations = [];
 let comments = [];
 let currentFilter = 'all';
 let searchTerm = '';
+let readCases = new Set();
+
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
+    loadReadCases();
     setupEventListeners();
 });
 
@@ -47,21 +60,21 @@ async function loadData() {
     try {
         const presentationsUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEETS.PRESENTATIONS}`;
         const commentsUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${CONFIG.SHEETS.COMMENTS}`;
-        
+
         const [presResponse, commResponse] = await Promise.all([
             fetch(presentationsUrl),
             fetch(commentsUrl)
         ]);
-        
+
         const presText = await presResponse.text();
         const commText = await commResponse.text();
-        
+
         presentations = parseGoogleSheetsResponse(presText);
         comments = parseGoogleSheetsResponse(commText);
-        
+
         buildFilters();
         renderCases();
-        
+
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('cases-grid').classList.remove('hidden');
     } catch (error) {
@@ -75,12 +88,12 @@ async function loadData() {
 function parseGoogleSheetsResponse(text) {
     const jsonString = text.substring(47).slice(0, -2);
     const data = JSON.parse(jsonString);
-    
+
     if (!data.table || !data.table.rows) return [];
-    
+
     const cols = data.table.cols.map(col => col.label);
     const rows = data.table.rows;
-    
+
     return rows.map(row => {
         const obj = {};
         row.c.forEach((cell, index) => {
@@ -94,7 +107,7 @@ function parseGoogleSheetsResponse(text) {
 function buildFilters() {
     const aiTools = [...new Set(presentations.map(p => p.aiTool))].filter(Boolean);
     const container = document.getElementById('ai-filter-container');
-    
+
     aiTools.forEach(tool => {
         const button = document.createElement('button');
         button.className = 'filter-btn px-6 py-3 rounded-full bg-white font-semibold text-slate-700 shadow-md hover:shadow-lg transition-all';
@@ -108,35 +121,35 @@ function buildFilters() {
 // Set filter
 function setFilter(filter, button) {
     currentFilter = filter;
-    
+
     // Update button states
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     button.classList.add('active');
-    
+
     filterAndRenderCases();
 }
 
 // Filter and render cases
 function filterAndRenderCases() {
     let filtered = presentations;
-    
+
     // Apply AI tool filter
     if (currentFilter !== 'all') {
         filtered = filtered.filter(p => p.aiTool === currentFilter);
     }
-    
+
     // Apply search
     if (searchTerm) {
-        filtered = filtered.filter(p => 
+        filtered = filtered.filter(p =>
             p.title?.toLowerCase().includes(searchTerm) ||
             p.presenter?.toLowerCase().includes(searchTerm) ||
             p.aiTool?.toLowerCase().includes(searchTerm) ||
             p.description?.toLowerCase().includes(searchTerm)
         );
     }
-    
+
     renderCases(filtered);
 }
 
@@ -144,42 +157,57 @@ function filterAndRenderCases() {
 function renderCases(casesToRender = presentations) {
     const grid = document.getElementById('cases-grid');
     const noResults = document.getElementById('no-results');
-    
+
     if (casesToRender.length === 0) {
         grid.classList.add('hidden');
         noResults.classList.remove('hidden');
         return;
     }
-    
+
     grid.classList.remove('hidden');
     noResults.classList.add('hidden');
     grid.innerHTML = '';
-    
+
     casesToRender.forEach((pres, index) => {
         const card = createCaseCard(pres, index);
         grid.appendChild(card);
     });
 }
 
+// Load read cases from localStorage
+function loadReadCases() {
+    const saved = localStorage.getItem('readCases');
+    if (saved) {
+        readCases = new Set(JSON.parse(saved));
+    }
+}
+
+// Save read cases to localStorage
+function saveReadCases() {
+    localStorage.setItem('readCases', JSON.stringify([...readCases]));
+}
+
 // Create case card
 function createCaseCard(pres, index) {
     const card = document.createElement('div');
     card.className = 'card-interactive bg-white rounded-2xl p-6 shadow-lg fade-in-up';
+    card.dataset.id = pres.id;
     card.style.animationDelay = `${index * 0.1}s`;
-    
+
     const caseComments = comments.filter(c => c.presentationId == pres.id);
-    
+
     card.innerHTML = `
         <div class="flex items-start justify-between mb-4">
             <div class="ai-badge text-white text-xs font-bold px-3 py-1 rounded-full">
                 ${pres.aiTool || 'AI 도구'}
             </div>
-            <div class="text-slate-400 text-sm">
+            <div class="text-slate-400 text-sm flex items-center gap-2">
+                ${readCases.has(pres.id.toString()) ? '<span class="text-green-500 font-bold">✓ 읽음</span>' : ''}
                 ${caseComments.length} 💬
             </div>
         </div>
         
-        <h3 class="text-xl font-bold text-slate-900 mb-3 line-clamp-2">
+        <h3 class="text-xl font-bold text-slate-900 mb-3 line-clamp-2 ${readCases.has(pres.id.toString()) ? 'opacity-50' : ''}">
             ${pres.title}
         </h3>
         
@@ -203,9 +231,9 @@ function createCaseCard(pres, index) {
             </button>
         </div>
     `;
-    
+
     card.addEventListener('click', () => openDetailModal(pres));
-    
+
     return card;
 }
 
@@ -213,10 +241,28 @@ function createCaseCard(pres, index) {
 function openDetailModal(pres) {
     const modal = document.getElementById('detail-modal');
     const modalContent = document.getElementById('modal-content');
-    
+
+    // Mark as read
+    if (!readCases.has(pres.id.toString())) {
+        readCases.add(pres.id.toString());
+        saveReadCases();
+
+        // Update the card in the grid immediately without full re-render
+        const card = document.querySelector(`.card-interactive[data-id="${pres.id}"]`);
+        if (card) {
+            const titleElement = card.querySelector('h3');
+            if (titleElement) titleElement.classList.add('opacity-50');
+
+            const metaContainer = card.querySelector('.text-slate-400');
+            if (metaContainer && !metaContainer.innerHTML.includes('읽음')) {
+                metaContainer.innerHTML = `<span class="text-green-500 font-bold">✓ 읽음</span> ` + metaContainer.innerHTML;
+            }
+        }
+    }
+
     const caseComments = comments.filter(c => c.presentationId == pres.id);
     const descParts = pres.description ? pres.description.split('\n\n') : [];
-    
+
     modalContent.innerHTML = `
         <div class="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-900 px-8 py-6 flex justify-between items-center rounded-t-2xl z-10">
             <h2 class="text-2xl font-display text-white">${pres.title}</h2>
@@ -275,7 +321,7 @@ function openDetailModal(pres) {
             <div class="mb-8">
                 <a href="${pres.resourceUrl}" target="_blank" 
                    class="block bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold py-4 px-6 rounded-xl text-center transition-all shadow-lg hover:shadow-xl hover:scale-105">
-                    📄 발표 자료 보기
+                    ${RESOURCE_ICONS[pres.resourceType] || '📄'} 발표 자료 보기
                 </a>
             </div>
             
@@ -330,7 +376,7 @@ function openDetailModal(pres) {
             </div>
         </div>
     `;
-    
+
     modal.classList.remove('hidden');
 }
 
@@ -359,29 +405,29 @@ async function submitCase() {
     const result = document.getElementById('new-result').value;
     const aiTool = document.getElementById('new-aiTool').value;
     const resourceUrl = document.getElementById('new-resourceUrl').value;
-    
+
     if (!title || !presenter || !team || !why || !what || !result || !aiTool || !resourceUrl) {
         alert('모든 필드를 입력해주세요.');
         return;
     }
-    
+
     const description = `${why}\n\n${what}\n\n${result}`;
     const resourceType = 'website';
-    
+
     try {
         const params = new URLSearchParams({
             action: 'addPresentation',
             title, presenter, team, description, aiTool, resourceType, resourceUrl
         });
-        
+
         const response = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params.toString()}`, {
             method: 'GET',
             redirect: 'follow'
         });
-        
+
         const text = await response.text();
         const result = JSON.parse(text);
-        
+
         if (result.success) {
             alert('✨ 새 사례가 등록되었습니다!');
             closeAddModal();
@@ -399,12 +445,12 @@ async function submitCase() {
 async function submitComment(presentationId) {
     const content = document.getElementById('comment-content').value;
     const author = document.getElementById('comment-author').value;
-    
+
     if (!content || !author) {
         alert('이름과 댓글 내용을 모두 입력해주세요.');
         return;
     }
-    
+
     try {
         const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
             method: 'POST',
@@ -414,10 +460,10 @@ async function submitComment(presentationId) {
                 presentationId, author, content, type: 'comment'
             })
         });
-        
+
         const text = await response.text();
         const result = JSON.parse(text);
-        
+
         if (result.success) {
             comments.push(result.comment);
             const pres = presentations.find(p => p.id == presentationId);
@@ -441,7 +487,7 @@ function formatDate(dateString) {
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
-    
+
     if (minutes < 1) return '방금 전';
     if (minutes < 60) return `${minutes}분 전`;
     if (hours < 24) return `${hours}시간 전`;
