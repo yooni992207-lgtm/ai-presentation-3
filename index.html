@@ -3,395 +3,394 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PM AI Knowledge Hub</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>AI 새벽배송 - PM AI 활용 사례</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --color-primary: #0F172A;
-            --color-secondary: #1E293B;
-            --color-accent: #F59E0B;
-            --color-accent-light: #FCD34D;
-            --color-surface: #F8FAFC;
-            --color-border: #E2E8F0;
-            --font-display: 'DM Serif Display', serif;
-            --font-body: 'Manrope', sans-serif;
-        }
-
-        * {
-            font-family: var(--font-body);
-        }
-
+        /* 새벽 그라데이션 배경 */
         body {
-            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            background: linear-gradient(180deg, 
+                #1a1f3a 0%,
+                #2d3561 40%,
+                #4a5578 70%,
+                #ff9a76 100%
+            );
             min-height: 100vh;
-        }
-
-        .font-display {
-            font-family: var(--font-display);
-        }
-
-        /* 카드 호버 효과 */
-        .card-interactive {
+            overflow-x: hidden;
             position: relative;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
         }
 
-        .card-interactive::before {
-            content: '';
+        /* 별 반짝이는 애니메이션 */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.3); }
+        }
+
+        .star {
             position: absolute;
-            inset: 0;
-            border-radius: 1rem;
-            background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
-            opacity: 0;
-            transition: opacity 0.4s;
-            z-index: -1;
-            filter: blur(20px);
-        }
-
-        .card-interactive:hover::before {
-            opacity: 0.2;
-        }
-
-        .card-interactive:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        /* 필터 버튼 */
-        .filter-btn {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-
-        .filter-btn::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--color-accent);
-            transform: translateX(-100%);
-            transition: transform 0.3s;
-        }
-
-        .filter-btn.active::after,
-        .filter-btn:hover::after {
-            transform: translateX(0);
-        }
-
-        /* AI 도구 배지 */
-        .ai-badge {
-            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        /* 페이드 인 애니메이션 */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        /* 검색 바 */
-        .search-bar {
-            position: relative;
+            width: 2px;
+            height: 2px;
             background: white;
-            border-radius: 9999px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+            z-index: 2;
+        }
+
+        /* 별 반짝이는 애니메이션 */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+            z-index: 2;
+        }
+
+        /* 배송지(건물) 스타일 */
+        .delivery-spot {
+            position: relative;
+            display: inline-block;
+        }
+
+        .delivery-icon {
+            font-size: 3.5rem; /* 2rem → 3.5rem 크기 증가 */
+            cursor: pointer;
             transition: all 0.3s;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
 
-        .search-bar:focus-within {
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
-            transform: scale(1.02);
+        .delivery-unvisited .delivery-icon {
+            opacity: 0.5;
+            filter: grayscale(0.7) drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
 
-        /* 모달 애니메이션 */
-        @keyframes modalSlideUp {
+        .delivery-unvisited:hover .delivery-icon {
+            opacity: 0.8;
+            filter: grayscale(0.3) drop-shadow(0 6px 10px rgba(0,0,0,0.4));
+            transform: scale(1.15);
+        }
+
+        .delivery-visited .delivery-icon {
+            animation: glow 2s infinite;
+        }
+
+        /* 배송지 정보 툴팁 */
+        .delivery-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+            margin-bottom: 10px;
+        }
+
+        .delivery-spot:hover .delivery-tooltip {
+            opacity: 1;
+        }
+
+        /* 택배상자 쌓임 */
+        .boxes-stack {
+            position: absolute;
+            bottom: -25px; /* -15px → -25px 하단으로 이동 */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 80px; /* 60px → 80px */
+            gap: 3px; /* 2px → 3px */
+        }
+
+        .box {
+            font-size: 1.4rem; /* 0.9rem → 1.4rem 크기 증가 */
+            animation: boxDrop 0.5s ease-out;
+            transform: rotate(var(--rotate, 0deg)) translateX(var(--offset-x, 0px)) translateY(var(--offset-y, 0px));
+        }
+
+        /* 배송 경로 점선 애니메이션 */
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+
+        .delivery-path {
+            stroke-dasharray: 5, 5;
+            animation: dash 1s linear infinite;
+        }
+
+        /* 택배상자 떨어지는 애니메이션 */
+        @keyframes boxDrop {
+            0% { transform: translateY(-30px) rotate(0deg); opacity: 0; }
+            50% { transform: translateY(0) rotate(180deg); }
+            100% { opacity: 1; }
+        }
+
+        /* 배송지 빛나는 효과 */
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 216, 155, 0.5)); }
+            50% { filter: drop-shadow(0 0 12px rgba(255, 216, 155, 0.9)); }
+        }
+
+        /* 모달 슬라이드 업 */
+        @keyframes slideUp {
             from {
+                transform: translateY(100%);
                 opacity: 0;
-                transform: translateY(50px) scale(0.95);
             }
             to {
+                transform: translateY(0);
                 opacity: 1;
-                transform: translateY(0) scale(1);
             }
         }
 
         .modal-content {
-            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.3s ease-out;
         }
 
-        /* 스크롤바 스타일 */
-        ::-webkit-scrollbar {
-            width: 10px;
+        /* 로딩 트럭 애니메이션 */
+        @keyframes truckDrive {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(100vw); }
         }
 
-        ::-webkit-scrollbar-track {
-            background: #F1F5F9;
+        .loading-truck {
+            animation: truckDrive 3s linear infinite;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #CBD5E1;
-            border-radius: 5px;
+        /* 구름 애니메이션 */
+        @keyframes cloudFloat {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100vw); }
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94A3B8;
-        }
-
-        /* 태그 */
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .tag:hover {
-            transform: scale(1.05);
-        }
-
-        /* 헤더 그라데이션 */
-        .header-gradient {
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-        }
-
-        /* 로딩 애니메이션 */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .loading-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .cloud {
+            position: absolute;
+            animation: cloudFloat 60s linear infinite;
+            opacity: 0.1;
         }
     </style>
 </head>
-<body>
+<body class="relative">
+    <!-- 별 배경 -->
+    <div id="stars-container" class="fixed inset-0 pointer-events-none" style="z-index: 2;"></div>
+
     <!-- 헤더 -->
-    <header class="header-gradient shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 py-6">
+    <header class="relative text-white py-6" style="z-index: 10;">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <span class="text-2xl">✨</span>
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-display text-white mb-1">PM AI Knowledge Hub</h1>
-                        <p class="text-slate-300 text-sm">PM들의 AI 활용 사례 공유 플랫폼</p>
-                    </div>
+                <div>
+                    <h1 class="text-4xl font-bold flex items-center gap-3">
+                        <span class="text-5xl">🌙</span>
+                        AI 새벽배송
+                        <span class="text-5xl">🚚</span>
+                    </h1>
+                    <p class="text-lg mt-2 text-yellow-200">PM들의 AI 활용 사례를 배송합니다</p>
                 </div>
                 <button 
-                    id="add-case-btn"
-                    class="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2"
+                    id="add-delivery-btn"
+                    class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-full transition shadow-lg flex items-center gap-2"
                 >
-                    <span class="text-xl">+</span>
-                    <span>새 사례 등록</span>
+                    <span class="text-2xl">📦</span>
+                    새 배송지 등록
                 </button>
             </div>
         </div>
     </header>
 
     <!-- 메인 컨텐츠 -->
-    <main class="max-w-7xl mx-auto px-6 py-12">
-        <!-- 검색 & 필터 -->
-        <div class="mb-12 fade-in-up">
-            <!-- 검색 바 -->
-            <div class="search-bar flex items-center px-6 py-4 mb-8">
-                <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <input 
-                    type="text" 
-                    id="search-input"
-                    placeholder="발표 제목, 발표자, AI 도구로 검색..."
-                    class="flex-1 px-4 py-2 bg-transparent outline-none text-slate-700 placeholder-slate-400"
-                />
-            </div>
-
-            <!-- AI 도구 필터 -->
-            <div class="flex flex-wrap gap-3" id="ai-filter-container">
-                <button class="filter-btn active px-6 py-3 rounded-full bg-white font-semibold text-slate-700 shadow-md hover:shadow-lg transition-all" data-filter="all">
-                    전체
-                </button>
-                <!-- 동적으로 추가됨 -->
-            </div>
-        </div>
-
+    <main class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" style="z-index: 10;">
         <!-- 로딩 상태 -->
         <div id="loading" class="flex flex-col items-center justify-center py-20">
-            <div class="w-16 h-16 border-4 border-slate-200 border-t-amber-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-slate-600 text-lg font-medium">사례를 불러오는 중...</p>
+            <div class="text-6xl mb-4 loading-truck">🚚</div>
+            <p class="text-yellow-200 text-lg">배송지를 확인하는 중...</p>
         </div>
 
         <!-- 에러 상태 -->
         <div id="error" class="hidden text-center py-20">
-            <div class="text-6xl mb-4">⚠️</div>
-            <p class="text-slate-600 text-lg font-medium">데이터를 불러올 수 없습니다</p>
-            <p class="text-slate-400 mt-2">잠시 후 다시 시도해주세요</p>
+            <div class="text-6xl mb-4">😢</div>
+            <p class="text-yellow-200 text-lg">배송지를 불러올 수 없습니다.</p>
+            <p class="text-purple-200 mt-2">잠시 후 다시 시도해주세요.</p>
         </div>
 
-        <!-- 사례 그리드 -->
-        <div id="cases-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- 동적으로 추가됨 -->
-        </div>
-
-        <!-- 결과 없음 -->
-        <div id="no-results" class="hidden text-center py-20">
-            <div class="text-6xl mb-4">🔍</div>
-            <p class="text-slate-600 text-lg font-medium">검색 결과가 없습니다</p>
-            <p class="text-slate-400 mt-2">다른 검색어로 시도해보세요</p>
+        <!-- 배송 지도 -->
+        <div id="delivery-map" class="hidden relative">
+            <div id="houses-container" class="relative min-h-[600px]">
+                <!-- 배송지들이 동적으로 추가됩니다 -->
+            </div>
         </div>
     </main>
 
-    <!-- 상세 모달 -->
-    <div id="detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl modal-content">
+    <!-- 배송지 상세 모달 -->
+    <div id="delivery-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-indigo-50 to-purple-50 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl modal-content">
             <div id="modal-content">
-                <!-- 동적으로 추가됨 -->
+                <!-- 모달 내용이 동적으로 추가됩니다 -->
             </div>
         </div>
     </div>
 
-    <!-- 등록 모달 -->
-    <div id="add-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl modal-content">
-            <div class="sticky top-0 bg-gradient-to-r from-amber-400 to-orange-500 px-8 py-6 flex justify-between items-center rounded-t-2xl">
-                <h2 class="text-2xl font-display text-slate-900">새 사례 등록</h2>
-                <button onclick="closeAddModal()" class="text-slate-900 hover:text-slate-700 text-3xl leading-none">&times;</button>
+    <!-- 새 배송지 등록 모달 -->
+    <div id="add-delivery-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-indigo-50 to-purple-50 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl modal-content">
+            <div class="sticky top-0 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-4 flex justify-between items-center rounded-t-2xl">
+                <h2 class="text-2xl font-bold flex items-center gap-2">
+                    <span class="text-3xl">📦</span>
+                    새 배송지 등록
+                </h2>
+                <button onclick="closeAddDeliveryModal()" class="text-white hover:text-yellow-200 text-3xl">&times;</button>
             </div>
             
-            <form onsubmit="event.preventDefault(); submitCase();" class="p-8 space-y-6">
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">📌 제목 *</label>
-                    <input 
-                        type="text" 
-                        id="new-title"
-                        class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition-colors"
-                        placeholder="예: ChatGPT로 고객 응대 자동화"
-                        required
-                    />
-                </div>
-                
-                <div class="grid grid-cols-2 gap-6">
+            <div class="p-6">
+                <form onsubmit="event.preventDefault(); submitDelivery();" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">👤 발표자 *</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">📝 배송물 이름 *</label>
                         <input 
                             type="text" 
-                            id="new-presenter"
-                            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition-colors"
-                            placeholder="이름"
+                            id="new-title"
+                            class="w-full border-2 border-purple-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="예: ChatGPT로 고객 응대 자동화"
                             required
                         />
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">🏢 소속 *</label>
-                        <input 
-                            type="text" 
-                            id="new-team"
-                            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition-colors"
-                            placeholder="예: 고객지원팀"
-                            required
-                        />
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">👤 발송인 *</label>
+                            <input 
+                                type="text" 
+                                id="new-presenter"
+                                class="w-full border-2 border-purple-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="이름"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">🏢 소속 *</label>
+                            <input 
+                                type="text" 
+                                id="new-team"
+                                class="w-full border-2 border-purple-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="예: 고객지원팀"
+                                required
+                            />
+                        </div>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">🤖 사용 AI 도구 *</label>
-                    <input 
-                        type="text" 
-                        id="new-aiTool"
-                        class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition-colors"
-                        placeholder="예: ChatGPT, Claude, Gemini"
-                        required
-                    />
-                </div>
-                
-                <div class="space-y-4 bg-slate-50 p-6 rounded-xl">
+                    
                     <div>
-                        <label class="block text-sm font-bold text-blue-600 mb-2">💡 왜 했는지? *</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">📦 내용물 설명 *</label>
                         <textarea 
-                            id="new-why"
-                            class="w-full border-2 border-blue-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none transition-colors"
-                            rows="3"
-                            placeholder="어떤 문제나 필요 때문에 AI를 활용했나요?"
+                            id="new-description"
+                            class="w-full border-2 border-purple-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            rows="4"
+                            placeholder="배송물에 대한 설명을 입력하세요..."
                             required
                         ></textarea>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-bold text-purple-600 mb-2">🛠️ 무엇이 좋아졌는지? *</label>
-                        <textarea 
-                            id="new-what"
-                            class="w-full border-2 border-purple-200 rounded-xl px-4 py-3 focus:border-purple-500 focus:outline-none transition-colors"
-                            rows="3"
-                            placeholder="구체적으로 무엇이 개선되었나요?"
+                        <label class="block text-sm font-bold text-gray-700 mb-1">🤖 사용 AI 도구 *</label>
+                        <input 
+                            type="text" 
+                            id="new-aiTool"
+                            class="w-full border-2 border-purple-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="예: ChatGPT, Claude"
                             required
-                        ></textarea>
+                        />
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-bold text-blue-600 mb-1">💡 왜 했는지? *</label>
+                            <textarea 
+                                id="new-why"
+                                class="w-full border-2 border-blue-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                rows="3"
+                                placeholder="어떤 문제나 필요 때문에 AI를 활용했나요?"
+                                required
+                            ></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-purple-600 mb-1">🛠️ 무엇이 좋아졌는지? *</label>
+                            <textarea 
+                                id="new-what"
+                                class="w-full border-2 border-purple-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                rows="3"
+                                placeholder="구체적으로 무엇이 개선되었나요?"
+                                required
+                            ></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-green-600 mb-1">✨ 어떤 결과로 이어졌는지? *</label>
+                            <textarea 
+                                id="new-result"
+                                class="w-full border-2 border-green-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                rows="3"
+                                placeholder="최종적으로 어떤 성과나 변화가 있었나요?"
+                                required
+                            ></textarea>
+                        </div>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-bold text-green-600 mb-2">✨ 어떤 결과로 이어졌는지? *</label>
-                        <textarea 
-                            id="new-result"
-                            class="w-full border-2 border-green-200 rounded-xl px-4 py-3 focus:border-green-500 focus:outline-none transition-colors"
-                            rows="3"
-                            placeholder="최종적으로 어떤 성과나 변화가 있었나요?"
+                        <label class="block text-sm font-bold text-gray-700 mb-1">🔗 자료 링크 *</label>
+                        <input 
+                            type="url" 
+                            id="new-resourceUrl"
+                            class="w-full border-2 border-purple-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="https://..."
                             required
-                        ></textarea>
+                        />
                     </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">🔗 자료 링크 *</label>
-                    <input 
-                        type="url" 
-                        id="new-resourceUrl"
-                        class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-amber-500 focus:outline-none transition-colors"
-                        placeholder="https://..."
-                        required
-                    />
-                </div>
-                
-                <div class="flex justify-end gap-4 pt-4">
-                    <button 
-                        type="button"
-                        onclick="closeAddModal()"
-                        class="px-8 py-3 border-2 border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors font-bold"
-                    >
-                        취소
-                    </button>
-                    <button 
-                        type="submit"
-                        class="px-8 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 rounded-xl transition-all font-bold shadow-lg hover:shadow-xl"
-                    >
-                        등록하기
-                    </button>
-                </div>
-            </form>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button 
+                            type="button"
+                            onclick="closeAddDeliveryModal()"
+                            class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition font-bold"
+                        >
+                            취소
+                        </button>
+                        <button 
+                            type="submit"
+                            class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-lg transition font-bold shadow-lg"
+                        >
+                            🚚 배송 시작!
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <script src="app.js"></script>
+    <script>
+        // 별 생성
+        const starsContainer = document.getElementById('stars-container');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            starsContainer.appendChild(star);
+        }
+    </script>
 </body>
 </html>
