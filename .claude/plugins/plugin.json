@@ -1,0 +1,22 @@
+{
+  "name": "dundun-team",
+  "version": "1.0.0",
+  "description": "든든팀 - 기획자, 개발자, 디자이너, QA가 협업하는 AI 팀 개발 스킬",
+  "author": {
+    "name": "Jeongyoon Lee",
+    "email": "your-email@example.com"
+  },
+  "repository": "https://github.com/your-repo/dundun-team",
+  "license": "Apache-2.0",
+  "keywords": [
+    "team",
+    "collaboration",
+    "planner",
+    "developer",
+    "designer",
+    "qa",
+    "korean",
+    "workflow"
+  ],
+  "outputStyles": "./output-styles/"
+}

@@ -1,0 +1,450 @@
+# 든든팀 (DunDun Team)
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-v2.1.33+-purple.svg)](https://docs.anthropic.com/en/docs/claude-code/getting-started)
+[![Version](https://img.shields.io/badge/Version-1.0.0-green.svg)](CHANGELOG.md)
+
+> **기획자, 개발자, 디자이너, QA가 협업하는 AI 팀 개발 스킬**
+
+든든팀은 Claude Code 플러그인으로, 전문 팀원들이 협업하여 프로젝트를 진행하는 시스템입니다. 기획부터 배포까지 전체 개발 워크플로우를 체계적으로 관리합니다.
+
+![DunDun Team](docs/images/dundun-team.png)
+
+---
+
+## 주요 기능
+
+- **👥 5가지 전문 에이전트** - 팀 리더, 기획자, 개발자, 디자이너, QA
+- **📋 체계적인 워크플로우** - 기획 → 디자인 → 개발 → 테스트 → 배포
+- **📝 자동 문서화** - 각 단계별 문서 자동 생성
+- **✅ 품질 관리** - 단계별 품질 게이트 및 승인 시스템
+- **🔄 상태 추적** - 실시간 프로젝트 진행 상황 모니터링
+- **🌏 다국어 지원** - 한국어, 영어, 일본어, 중국어 등
+
+---
+
+## 팀 구성
+
+### 팀 리더 (Team Lead)
+- **역할**: 프로젝트 총괄, 작업 분배, 품질 관리
+- **모델**: opus
+- **책임**: 기술 방향 설정, 의사결정, 리스크 관리
+
+### 기획자 (Planner)
+- **역할**: 요구사항 분석, 기획 문서 작성
+- **모델**: sonnet
+- **책임**: 범위 정의, 우선순위 결정, 사용자 스토리 작성
+
+### 개발자 (Developer)
+- **역할**: 기능 구현, 코드 작성
+- **모델**: sonnet
+- **책임**: 개발, 단위 테스트, 코드 리뷰
+
+### 디자이너 (Designer)
+- **역할**: UI/UX 디자인, 디자인 시스템
+- **모델**: sonnet
+- **책임**: 와이어프레임, 프로토타입, 시각 디자인
+
+### QA 엔지니어 (QA Engineer)
+- **역할**: 품질 보증, 테스트
+- **모델**: sonnet
+- **책임**: 테스트 계획, 실행, 버그 리포팅
+
+---
+
+## 워크플로우
+
+```
+📋 기획 (Plan)
+   ↓
+   [기획 문서 작성]
+   [요구사항 분석]
+   [우선순위 결정]
+   ↓
+🎨 디자인 (Design)
+   ↓
+   [UI/UX 설계]
+   [와이어프레임]
+   [디자인 시스템]
+   ↓
+💻 개발 (Develop)
+   ↓
+   [기능 구현]
+   [코드 작성]
+   [단위 테스트]
+   ↓
+✅ 테스트 (Test)
+   ↓
+   [테스트 계획]
+   [테스트 실행]
+   [버그 리포팅]
+   ↓
+🚀 배포 (Deploy)
+```
+
+---
+
+## 설치 방법
+
+### 옵션 1: 로컬 플러그인으로 사용 (현재 프로젝트)
+
+이미 이 저장소를 클론했다면 바로 사용할 수 있습니다.
+
+```bash
+# 프로젝트 디렉토리에서
+cd /Users/jeongyoon.lee/project/pm_meet
+
+# Claude Code에서 사용
+/dundun start my-feature
+```
+
+### 옵션 2: 글로벌 플러그인으로 설치
+
+다른 프로젝트에서도 사용하려면:
+
+```bash
+# 1. ~/.claude/plugins/ 디렉토리에 복사
+cp -r /Users/jeongyoon.lee/project/pm_meet ~/.claude/plugins/dundun-team
+
+# 2. 다른 프로젝트에서 사용
+cd /path/to/your/project
+/dundun start my-feature
+```
+
+---
+
+## 사용법
+
+### 1. 새 프로젝트 시작
+
+```bash
+/dundun start user-authentication
+```
+
+팀 리더가 자동으로:
+- 프로젝트 디렉토리 생성
+- 기획자에게 기획 문서 작성 요청
+- 상태 추적 시작
+
+### 2. 기획 단계
+
+```bash
+/dundun plan user-authentication
+```
+
+기획자가:
+- 요구사항 분석
+- `docs/01-plan/user-authentication.plan.md` 작성
+- 팀 리더에게 검토 요청
+
+### 3. 디자인 단계
+
+```bash
+/dundun design user-authentication
+```
+
+디자이너가:
+- 기획 문서 기반 UI/UX 설계
+- `docs/02-design/user-authentication.design.md` 작성
+- 와이어프레임 및 목업 제작
+
+### 4. 개발 단계
+
+```bash
+/dundun develop user-authentication
+```
+
+개발자가:
+- 디자인 기반 기능 구현
+- 단위 테스트 작성
+- `docs/03-develop/user-authentication.develop.md` 작성
+
+### 5. 테스트 단계
+
+```bash
+/dundun test user-authentication
+```
+
+QA가:
+- 테스트 계획 수립
+- 테스트 실행 및 버그 발견
+- `docs/04-test/user-authentication.test-report.md` 작성
+
+### 6. 상태 확인
+
+```bash
+/dundun status
+```
+
+출력 예시:
+```
+📊 든든팀 프로젝트 상태
+─────────────────────────────
+Feature: user-authentication
+Phase: Develop (개발 중)
+Progress: 60%
+─────────────────────────────
+[Plan] ✅ → [Design] ✅ → [Develop] 🔄 → [Test] ⏳ → [Deploy] ⏳
+```
+
+### 7. 다음 단계 안내
+
+```bash
+/dundun next
+```
+
+팀 리더가 현재 단계를 확인하고 다음에 할 일을 안내합니다.
+
+---
+
+## 명령어 참조
+
+| 명령어 | 설명 | 예시 |
+|--------|------|------|
+| `/dundun start [feature]` | 새 프로젝트 시작 | `/dundun start user-auth` |
+| `/dundun plan [feature]` | 기획 문서 작성 | `/dundun plan user-auth` |
+| `/dundun design [feature]` | 디자인 문서 작성 | `/dundun design user-auth` |
+| `/dundun develop [feature]` | 개발 진행 | `/dundun develop user-auth` |
+| `/dundun test [feature]` | 테스트 수행 | `/dundun test user-auth` |
+| `/dundun status` | 현재 상태 확인 | `/dundun status` |
+| `/dundun next` | 다음 단계 안내 | `/dundun next` |
+| `/dundun team` | 팀 구성 보기 | `/dundun team` |
+
+---
+
+## 프로젝트 구조
+
+```
+project/
+├── .claude-plugin/           # 플러그인 설정
+│   └── plugin.json
+├── agents/                   # 전문 에이전트
+│   ├── team-lead.md         # 팀 리더
+│   ├── planner.md           # 기획자
+│   ├── developer.md         # 개발자
+│   ├── designer.md          # 디자이너
+│   └── qa-engineer.md       # QA 엔지니어
+├── skills/                   # 스킬 정의
+│   └── dundun/
+│       └── SKILL.md
+├── templates/                # 문서 템플릿
+│   ├── plan.template.md
+│   ├── design.template.md
+│   ├── develop.template.md
+│   └── test.template.md
+├── docs/                     # 프로젝트 문서
+│   ├── 01-plan/
+│   ├── 02-design/
+│   ├── 03-develop/
+│   └── 04-test/
+├── .dundun/                  # 상태 관리
+│   ├── status.json
+│   └── team.json
+└── README.md
+```
+
+---
+
+## 문서 템플릿
+
+각 단계별로 전문적인 문서 템플릿이 제공됩니다:
+
+### 기획 문서 (plan.template.md)
+- 프로젝트 개요
+- 목표 및 범위
+- 요구사항 (기능/비기능)
+- 사용자 스토리
+- 성공 지표
+- 일정 및 마일스톤
+
+### 디자인 문서 (design.template.md)
+- 디자인 목표
+- 사용자 플로우
+- 화면 설계
+- 디자인 시스템 (컬러, 타이포그래피, 간격)
+- 컴포넌트 라이브러리
+- 반응형 디자인
+- 접근성 가이드
+
+### 개발 문서 (develop.template.md)
+- 기술 스택
+- 프로젝트 구조
+- 데이터베이스 스키마
+- API 엔드포인트
+- 주요 컴포넌트
+- 환경 변수
+- 배포 가이드
+
+### 테스트 문서 (test.template.md)
+- 테스트 전략
+- 테스트 케이스
+- 자동화 테스트
+- 버그 리포트
+- 테스트 메트릭
+- 배포 전 체크리스트
+
+---
+
+## 품질 게이트
+
+각 단계는 다음 품질 기준을 충족해야 다음 단계로 진행합니다:
+
+| 단계 | 품질 기준 |
+|------|-----------|
+| **Plan** | 기획 문서 완성도, 팀 리더 승인 |
+| **Design** | 디자인 완성도, 개발 가능성 검토 |
+| **Develop** | 코드 품질, 단위 테스트 통과율 80%+ |
+| **Test** | 테스트 통과율 95%+, Critical 버그 0개 |
+| **Deploy** | 최종 승인, 모든 체크리스트 완료 |
+
+---
+
+## 협업 패턴
+
+든든팀은 5가지 협업 패턴을 지원합니다:
+
+### 1. Leader 패턴
+팀 리더가 작업을 분배하고 팀원이 실행
+- **사용 시기**: Plan, Deploy 단계
+
+### 2. Council 패턴
+여러 팀원의 관점이 필요한 경우
+- **사용 시기**: Design 단계 (디자이너 + 개발자 협의)
+
+### 3. Swarm 패턴
+대규모 병렬 작업
+- **사용 시기**: Develop 단계 (여러 기능 동시 개발)
+
+### 4. Pipeline 패턴
+순차적 의존성
+- **사용 시기**: Plan → Design → Develop 전환
+
+### 5. Watchdog 패턴
+지속적 모니터링
+- **사용 시기**: Test 단계 (진행 중)
+
+---
+
+## 예시 프로젝트
+
+### 사용자 인증 시스템 구축
+
+```bash
+# 1. 프로젝트 시작
+/dundun start user-authentication
+
+# 2. 기획 (기획자가 요구사항 분석 및 문서 작성)
+/dundun plan user-authentication
+
+# 3. 디자인 (디자이너가 로그인/회원가입 UI 설계)
+/dundun design user-authentication
+
+# 4. 개발 (개발자가 인증 로직 구현)
+/dundun develop user-authentication
+
+# 5. 테스트 (QA가 보안 및 기능 테스트)
+/dundun test user-authentication
+
+# 6. 상태 확인
+/dundun status
+```
+
+각 단계마다 전문 문서가 자동으로 생성됩니다:
+- `docs/01-plan/user-authentication.plan.md`
+- `docs/02-design/user-authentication.design.md`
+- `docs/03-develop/user-authentication.develop.md`
+- `docs/04-test/user-authentication.test-report.md`
+
+---
+
+## 커스터마이징
+
+### 에이전트 수정
+
+특정 팀원의 역할을 수정하려면:
+
+```bash
+# 예: 기획자의 작업 방식 변경
+vi agents/planner.md
+```
+
+### 템플릿 수정
+
+문서 템플릿을 프로젝트에 맞게 수정:
+
+```bash
+# 예: 기획 문서 템플릿 수정
+vi templates/plan.template.md
+```
+
+### 워크플로우 추가
+
+새로운 단계를 추가하려면:
+
+1. 새 에이전트 생성: `agents/your-agent.md`
+2. 스킬 업데이트: `skills/dundun/SKILL.md`
+3. 템플릿 추가: `templates/your-template.md`
+
+---
+
+## 요구사항
+
+| 항목 | 최소 버전 | 비고 |
+|------|-----------|------|
+| **Claude Code** | **v2.1.33+** | 필수 |
+| Node.js | v18+ | 스크립트 실행용 (선택) |
+
+---
+
+## 참고 자료
+
+든든팀은 [bkit-claude-code](https://github.com/popup-studio-ai/bkit-claude-code)를 참고하여 만들어졌습니다.
+
+### 참고한 기능
+- 에이전트 시스템 (CTO-Led Agent Teams)
+- PDCA 방법론
+- 문서 템플릿 구조
+- 상태 관리 시스템
+
+---
+
+## 라이선스
+
+Copyright 2026 Jeongyoon Lee
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+---
+
+## 기여하기
+
+든든팀에 기여하고 싶으시다면:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 지원
+
+- **이슈**: [GitHub Issues](링크)
+- **이메일**: your-email@example.com
+
+---
+
+Made with ❤️ by Jeongyoon Lee
+
+Inspired by [bkit-claude-code](https://github.com/popup-studio-ai/bkit-claude-code)
